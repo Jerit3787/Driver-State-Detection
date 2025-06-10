@@ -50,6 +50,7 @@ class AttentionScorer:
 
         Methods
         ----------
+
         - eval_scores: used to evaluate the driver state of attention
         - get_PERCLOS: specifically used to evaluate the driver sleepiness
         """
@@ -143,8 +144,7 @@ class AttentionScorer:
 
         if ((self.roll_tresh is not None and head_roll is not None and abs(head_roll) > self.roll_tresh) or (
                 head_pitch is not None and abs(head_pitch) > self.pitch_tresh) or (
-                head_yaw is not None and abs(head_yaw) > self.yaw_tresh)):
-            if not distracted:
+                head_yaw is not None and abs(head_yaw) > self.yaw_tresh)):            if not distracted:
                 self.pose_counter += 1
         elif self.pose_counter > 0:
             self.pose_counter -= 1
@@ -159,6 +159,7 @@ class AttentionScorer:
 
     def get_PERCLOS(self, ear_score, current_time=None):
         """
+
         :param ear_score: float
             EAR (Eye Aspect Ratio) score obtained from the driver eye aperture
         :param current_time: float or None
@@ -186,9 +187,7 @@ class AttentionScorer:
 
         # if the ear_score is lower or equal than the threshold, increase the eye_closure_counter
         if (ear_score is not None) and (ear_score <= self.ear_tresh):
-            self.eye_closure_counter += 1
-
-        # compute the cumulative eye closure time
+            self.eye_closure_counter += 1        # compute the cumulative eye closure time
         closure_time = (self.eye_closure_counter * self.delta_time_frame)
         
         # Compute the PERCLOS over a given time period
@@ -200,9 +199,7 @@ class AttentionScorer:
             perclos_score = 0.0
             
         # Ensure PERCLOS doesn't exceed 1.0 (100%)
-        perclos_score = min(perclos_score, 1.0)
-
-        if perclos_score >= self.perclos_tresh:  # if the PERCLOS score is higher than a threshold, tired = True
+        perclos_score = min(perclos_score, 1.0)        if perclos_score >= self.perclos_tresh:  # if the PERCLOS score is higher than a threshold, tired = True
             tired = True
 
         if self.verbose:

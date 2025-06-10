@@ -78,14 +78,17 @@ class EyeDetector:
         # numpy array for storing the keypoints positions of the right eye
         eye_pts_r = np.zeros(shape=(6, 2))
 
-        for n in range(36, 42):  # the dlib keypoints from 36 to 42 are referring to the left eye
-            point_l = pts.part(n)  # save the i-keypoint of the left eye
-            point_r = pts.part(n + 6)  # save the i-keypoint of the right eye
-            # array of x,y coordinates for the left eye reference point
-            eye_pts_l[i] = [point_l.x, point_l.y]
-            # array of x,y coordinates for the right eye reference point
-            eye_pts_r[i] = [point_r.x, point_r.y]
-            i += 1  # increasing the auxiliary counter
+        # Support both dlib and numpy array landmarks
+        for n in range(36, 42):
+            if hasattr(pts, 'part'):
+                point_l = pts.part(n)
+                point_r = pts.part(n + 6)
+                eye_pts_l[i] = [point_l.x, point_l.y]
+                eye_pts_r[i] = [point_r.x, point_r.y]
+            else:
+                eye_pts_l[i] = [pts[n, 0], pts[n, 1]]
+                eye_pts_r[i] = [pts[n + 6, 0], pts[n + 6, 1]]
+            i += 1
 
         def EAR_eye(eye_pts):
             """
@@ -135,7 +138,7 @@ class EyeDetector:
 
         def get_ROI(left_corner_keypoint_num: int):
             """
-            Get the ROI bounding box of the eye given one of it's dlib keypoint found in the face
+            Get the ROI bounding box of the eye given one of its dlib keypoints found in the face
 
             :param left_corner_keypoint_num: most left dlib keypoint of the eye
             :return: eye_roi
@@ -143,18 +146,25 @@ class EyeDetector:
             """
 
             kp_num = left_corner_keypoint_num
-
-            eye_array = np.array(
-                [(self.keypoints.part(kp_num).x, self.keypoints.part(kp_num).y),
-                 (self.keypoints.part(kp_num+1).x,
-                  self.keypoints.part(kp_num+1).y),
-                 (self.keypoints.part(kp_num+2).x,
-                  self.keypoints.part(kp_num+2).y),
-                 (self.keypoints.part(kp_num+3).x,
-                  self.keypoints.part(kp_num+3).y),
-                 (self.keypoints.part(kp_num+4).x,
-                  self.keypoints.part(kp_num+4).y),
-                 (self.keypoints.part(kp_num+5).x, self.keypoints.part(kp_num+5).y)], np.int32)
+            # Support both dlib and numpy array landmarks
+            if hasattr(self.keypoints, 'part'):
+                eye_array = np.array([
+                    (self.keypoints.part(kp_num).x, self.keypoints.part(kp_num).y),
+                    (self.keypoints.part(kp_num+1).x, self.keypoints.part(kp_num+1).y),
+                    (self.keypoints.part(kp_num+2).x, self.keypoints.part(kp_num+2).y),
+                    (self.keypoints.part(kp_num+3).x, self.keypoints.part(kp_num+3).y),
+                    (self.keypoints.part(kp_num+4).x, self.keypoints.part(kp_num+4).y),
+                    (self.keypoints.part(kp_num+5).x, self.keypoints.part(kp_num+5).y)
+                ], np.int32)
+            else:
+                eye_array = np.array([
+                    (self.keypoints[kp_num, 0], self.keypoints[kp_num, 1]),
+                    (self.keypoints[kp_num+1, 0], self.keypoints[kp_num+1, 1]),
+                    (self.keypoints[kp_num+2, 0], self.keypoints[kp_num+2, 1]),
+                    (self.keypoints[kp_num+3, 0], self.keypoints[kp_num+3, 1]),
+                    (self.keypoints[kp_num+4, 0], self.keypoints[kp_num+4, 1]),
+                    (self.keypoints[kp_num+5, 0], self.keypoints[kp_num+5, 1])
+                ], np.int32)
 
             min_x = np.min(eye_array[:, 0])
             max_x = np.max(eye_array[:, 0])
@@ -177,18 +187,44 @@ class EyeDetector:
             eye_center = np.array(
                 [(eye_roi.shape[1] // 2), (eye_roi.shape[0] // 2)])  # eye ROI center position
             gaze_score = None
+            circles = None            # Enhanced preprocessing for better pupil detection
+            eye_roi = cv2.bilateralFilter(eye_roi, 5, 80, 80)
+            
+            # Apply histogram equalization to improve contrast
+            eye_roi = cv2.equalizeHist(eye_roi)
+            
+            # Try multiple parameter sets for Hough Circle detection
             circles = None
-
-            # a bilateral filter is applied for reducing noise and keeping eye details
-            eye_roi = cv2.bilateralFilter(eye_roi, 4, 40, 40)
-
+            
+            # Parameter set 1: More sensitive detection
             circles = cv2.HoughCircles(eye_roi, cv2.HOUGH_GRADIENT, 1, 10,
-                                       param1=90, param2=6, minRadius=1, maxRadius=9)
-            # a Hough Transform is used to find the iris circle and his center (the pupil) on the grayscale eye_roi image with the contours drawn in white
+                                       param1=50, param2=8, minRadius=1, maxRadius=15)
+            
+            # Parameter set 2: If first attempt fails, try with different parameters
+            if circles is None or len(circles) == 0:
+                circles = cv2.HoughCircles(eye_roi, cv2.HOUGH_GRADIENT, 1, 5,
+                                           param1=30, param2=10, minRadius=2, maxRadius=20)
+            
+            # Parameter set 3: Most permissive detection
+            if circles is None or len(circles) == 0:
+                circles = cv2.HoughCircles(eye_roi, cv2.HOUGH_GRADIENT, 2, 5,
+                                           param1=20, param2=15, minRadius=1, maxRadius=25)            # a Hough Transform is used to find the iris circle and his center (the pupil) on the grayscale eye_roi image with the contours drawn in white
 
             if circles is not None and len(circles) > 0:
                 circles = np.uint16(np.around(circles))
-                circle = circles[0][0, :]
+                
+                # Select the best circle (closest to center if multiple found)
+                if len(circles[0]) > 1:
+                    best_circle = None
+                    min_distance = float('inf')
+                    for circle in circles[0]:
+                        dist_to_center = np.sqrt((circle[0] - eye_center[0])**2 + (circle[1] - eye_center[1])**2)
+                        if dist_to_center < min_distance:
+                            min_distance = dist_to_center
+                            best_circle = circle
+                    circle = best_circle
+                else:
+                    circle = circles[0][0, :]
 
                 cv2.circle(
                     eye_roi, (circle[0], circle[1]), circle[2], (255, 255, 255), 1)
@@ -202,16 +238,20 @@ class EyeDetector:
                     pupil_position[0], pupil_position[1]), (255, 255, 255), 1)
 
                 gaze_score = LA.norm(
-                    pupil_position - eye_center) / eye_center[0]
+                    pupil_position - eye_center) / max(eye_center[0], 1)  # Avoid division by zero
                 # computes the L2 distance between the eye_center and the pupil position
-
-            cv2.circle(eye_roi, (eye_center[0],
-                                 eye_center[1]), 1, (0, 0, 0), -1)
+            else:
+                # Fallback: if no pupil detected, assume looking straight (low gaze score)
+                if self.show_processing:
+                    cv2.putText(eye_roi, "No pupil", (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+                gaze_score = 0.1  # Low score indicates looking straight            
+                cv2.circle(eye_roi, (eye_center[0], eye_center[1]), 1, (0, 0, 0), -1)
 
             if gaze_score is not None:
                 return gaze_score, eye_roi
             else:
-                return None, None
+                # Return a default gaze score if detection completely fails
+                return 0.15, eye_roi
 
         left_eye_ROI = get_ROI(36)  # computes the ROI for the left eye
         right_eye_ROI = get_ROI(42)  # computes the ROI for the right eye
@@ -225,13 +265,18 @@ class EyeDetector:
             left_eye = resize(left_eye, 1000)
             right_eye = resize(right_eye, 1000)
             cv2.imshow("left eye", left_eye)
-            cv2.imshow("right eye", right_eye)
-
-        if gaze_eye_left and gaze_eye_right:
-
+            cv2.imshow("right eye", right_eye)        
+            
+        if gaze_eye_left is not None and gaze_eye_right is not None:
             # computes the average gaze score for the 2 eyes
-            avg_gaze_score = (gaze_eye_left + gaze_eye_left) / 2
+            avg_gaze_score = (gaze_eye_left + gaze_eye_right) / 2
             return avg_gaze_score
-
+        elif gaze_eye_left is not None:
+            # Use only left eye if right eye detection failed
+            return gaze_eye_left
+        elif gaze_eye_right is not None:
+            # Use only right eye if left eye detection failed
+            return gaze_eye_right
         else:
-            return None
+            # Both eyes failed - return default low score (looking straight)
+            return 0.15

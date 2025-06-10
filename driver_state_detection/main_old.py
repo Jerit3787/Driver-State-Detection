@@ -23,9 +23,7 @@ def main():
 
     # selection the camera number, default is 0 (webcam)
     parser.add_argument('-c', '--camera', type=int,
-                        default=0, metavar='', help='Camera number, default is 0 (webcam)')
-
-    # selection of fps limit for computing time between frames
+                        default=0, metavar='', help='Camera number, default is 0 (webcam)')    # selection of fps limit for computing time between frames
     parser.add_argument('-F', '--fps_limit', type=int, default=11, metavar='',
                         help='FPS limit, default is 11 (WARNING: if this surpasses the fps max rate reachable by your device, it will cause problems for the scores computation)')
     # TODO: add option for choose if use camera matrix and dist coeffs
@@ -42,9 +40,7 @@ def main():
     parser.add_argument('--verbose', type=bool, default=False,
                         metavar='', help='Prints additional info, default is false')
     parser.add_argument('--use_mtcnn', type=bool, default=True,
-                        metavar='', help='Use MTCNN face detector instead of OpenCV Haar cascade for better accuracy, default is true')
-
-    # Attention Scorer parameters (EAR, Gaze Score, Pose)
+                        metavar='', help='Use MTCNN face detector instead of OpenCV Haar cascade for better accuracy, default is true')    # Attention Scorer parameters (EAR, Gaze Score, Pose)
     parser.add_argument('--smooth_factor', type=float, default=0.5,
                         metavar='', help='Sets the smooth factor for the head pose estimation keypoint smoothing, default is 0.5')
     parser.add_argument('--ear_tresh', type=float, default=0.15,
@@ -52,8 +48,7 @@ def main():
     parser.add_argument('--ear_time_tresh', type=float, default=2,                        
                         metavar='', help='Sets the EAR time (seconds) threshold for the Attention Scorer, default is 2 seconds')
     parser.add_argument('--gaze_tresh', type=float, default=0.2,
-                        metavar='', help='Sets the Gaze Score threshold for the Attention Scorer, default is 0.38 (calibrated for custom keypoint model)')
-    parser.add_argument('--gaze_time_tresh', type=float, default=2, metavar='',
+                        metavar='', help='Sets the Gaze Score threshold for the Attention Scorer, default is 0.38 (calibrated for custom keypoint model)')    parser.add_argument('--gaze_time_tresh', type=float, default=2, metavar='',
                         help='Sets the Gaze Score time (seconds) threshold for the Attention Scorer, default is 2 seconds')
     parser.add_argument('--perclos_tresh', type=float, default=0.2, metavar='',
                         help='Sets the PERCLOS threshold for the Attention Scorer, default is 0.2 (20%% of time period)')
@@ -70,7 +65,7 @@ def main():
     args = parser.parse_args()
 
     if args.verbose:
-        print(f"Arguments and Parameters used:\\n{args}\\n")
+        print(f"Arguments and Parameters used:\n{args}\n")
 
     if not cv2.useOptimized():
         try:
@@ -81,8 +76,7 @@ def main():
 
     ctime = 0  # current time (used to compute FPS)
     ptime = 0  # past time (used to compute FPS)
-    prev_time = 0  # previous time variable, used to set the FPS limit
-    # FPS upper limit value, needed for estimating the time for each frame and increasing performances
+    prev_time = 0  # previous time variable, used to set the FPS limit    # FPS upper limit value, needed for estimating the time for each frame and increasing performances
     fps_lim = args.fps_limit
     time_lim = 1. / fps_lim  # time window for each frame taken by the webcam
     
@@ -109,9 +103,7 @@ def main():
 
     Eye_det = EyeDet(show_processing=args.show_eye_proc)
 
-    Head_pose = HeadPoseEst(show_axis=args.show_axis)
-
-    # instantiation of the attention scorer object, with the various thresholds
+    Head_pose = HeadPoseEst(show_axis=args.show_axis)    # instantiation of the attention scorer object, with the various thresholds
     # NOTE: set verbose to True for additional printed information about the scores
     Scorer = AttScorer(fps_lim, ear_tresh=args.ear_tresh, ear_time_tresh=args.ear_time_tresh, gaze_tresh=args.gaze_tresh,
                        gaze_time_tresh=args.gaze_time_tresh, perclos_tresh=args.perclos_tresh, pitch_tresh=args.pitch_tresh, yaw_tresh=args.yaw_tresh,
@@ -182,18 +174,17 @@ def main():
                 
                 # Skip if face is too small
                 if face_img.shape[0] > 1 and face_img.shape[1] > 1:
-                    keypoints = keypoint_model.predict(face_img)
-                    # Map keypoints back to original image coordinates
-                    keypoints[:, 0] += x1
-                    keypoints[:, 1] += y1
+                    keypoints = keypoint_model.predict(face_img)                # Map keypoints back to original image coordinates
+                keypoints[:, 0] += x1
+                keypoints[:, 1] += y1
                 
-                    # Show eye keypoints (adapted for numpy keypoints)
-                    for n in range(keypoints.shape[0]):
-                        cx, cy = int(keypoints[n, 0]), int(keypoints[n, 1])
-                        cv2.circle(frame, (cx, cy), 2, (0, 255, 255), -1)
-                        cv2.putText(frame, str(n), (cx, cy), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 0), 1)
+                # Show eye keypoints (adapted for numpy keypoints)
+                for n in range(keypoints.shape[0]):
+                    cx, cy = int(keypoints[n, 0]), int(keypoints[n, 1])
+                    cv2.circle(frame, (cx, cy), 2, (0, 255, 255), -1)
+                    cv2.putText(frame, str(n), (cx, cy), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 0), 1)
 
-                    # Compute EAR (adapt EyeDetector to accept numpy keypoints)
+                # Compute EAR (adapt EyeDetector to accept numpy keypoints)
                     ear = Eye_det.get_EAR(frame=gray, landmarks=keypoints)
                     
                     # Get current time for PERCLOS calculation

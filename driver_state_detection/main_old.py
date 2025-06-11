@@ -99,7 +99,7 @@ def main():
             print("Using OpenCV Haar cascade face detector")
 
     # Load your keypoint model
-    keypoint_model = KeypointModel('../20240311_Training_a_Robust_Facial_Keypoint_Detection_Model/outputs/model.pth')
+    keypoint_model = KeypointModel('../models/outputs/model.pth')
 
     Eye_det = EyeDet(show_processing=args.show_eye_proc)
 

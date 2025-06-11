@@ -8,7 +8,7 @@ def check_keypoint_mapping():
     Specifically check if eye landmarks (36-47) are in the correct positions
     """
     # Load the model
-    model = KeypointModel('../20240311_Training_a_Robust_Facial_Keypoint_Detection_Model/outputs/model.pth')
+    model = KeypointModel('../models/outputs/model.pth')
     
     # Use webcam
     cap = cv2.VideoCapture(1)

@@ -1,5 +1,8 @@
 # Real Time Driver State Detection
 
+**Note:** 
+This repo is forked from `e-candeloro/Driver-State-Detection` and has been heavily modified to run a custom resnet50 model from [debuggercafe.com tutorial](https://debuggercafe.com/robust-facial-keypoint-detection-model/). The files used to train the models are located at [`models`](https://github.com/Jerit3787/Driver-State-Detection/tree/dlib-based/models) folder
+
 Real time, webcam based, driver attention state detection and monitoring using Python with the OpenCV and Dlib libraries.
 
 ![driver state detection demo](https://user-images.githubusercontent.com/67196406/173455413-ba95db40-6be5-4d64-9a1d-6c998854130e.gif)

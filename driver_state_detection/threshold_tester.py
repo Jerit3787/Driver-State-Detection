@@ -12,7 +12,7 @@ from Eye_Dector_Module import EyeDetector
 
 def test_gaze_thresholds():
     # Load the model
-    model = KeypointModel('../20240311_Training_a_Robust_Facial_Keypoint_Detection_Model/outputs/model.pth')
+    model = KeypointModel('../models/outputs/model.pth')
     eye_detector = EyeDetector()
     
     # Use webcam

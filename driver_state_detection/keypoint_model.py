@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 import sys
-sys.path.append('../20240311_Training_a_Robust_Facial_Keypoint_Detection_Model')
+sys.path.append('../models')
 from model import FaceKeypointModel
 
 class KeypointModel:

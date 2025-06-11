@@ -9,7 +9,7 @@ def analyze_gaze_detection():
     This will help us understand what gaze scores we get for different head poses
     """
     # Load the model
-    model = KeypointModel('../20240311_Training_a_Robust_Facial_Keypoint_Detection_Model/outputs/model.pth')
+    model = KeypointModel('../models/outputs/model.pth')
     eye_detector = EyeDetector(show_processing=True)  # Enable processing display
     
     # Use webcam

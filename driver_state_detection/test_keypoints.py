@@ -5,7 +5,7 @@ from keypoint_model import KeypointModel
 def test_keypoint_accuracy():
     """Test the corrected keypoint preprocessing"""
     # Load the model
-    model = KeypointModel('../20240311_Training_a_Robust_Facial_Keypoint_Detection_Model/outputs/model.pth')
+    model = KeypointModel('../models/outputs/model.pth')
     
     # Use webcam to capture a frame for testing
     cap = cv2.VideoCapture(0)

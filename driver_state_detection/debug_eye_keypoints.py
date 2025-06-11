@@ -26,7 +26,7 @@ def debug_eye_keypoints():
     
     # Load keypoint model
     try:
-        keypoint_model = KeypointModel('../20240311_Training_a_Robust_Facial_Keypoint_Detection_Model/outputs/model.pth')
+        keypoint_model = KeypointModel('../models/outputs/model.pth')
         print("✓ Keypoint model loaded successfully")
     except Exception as e:
         print(f"✗ Failed to load keypoint model: {e}")

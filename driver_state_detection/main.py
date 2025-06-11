@@ -47,11 +47,11 @@ def main():
     # Attention Scorer parameters (EAR, Gaze Score, Pose)
     parser.add_argument('--smooth_factor', type=float, default=0.5,
                         metavar='', help='Sets the smooth factor for the head pose estimation keypoint smoothing, default is 0.5')
-    parser.add_argument('--ear_tresh', type=float, default=0.15,
+    parser.add_argument('--ear_tresh', type=float, default=0.24,
                         metavar='', help='Sets the EAR threshold for the Attention Scorer, default is 0.15')
     parser.add_argument('--ear_time_tresh', type=float, default=2,                        
                         metavar='', help='Sets the EAR time (seconds) threshold for the Attention Scorer, default is 2 seconds')
-    parser.add_argument('--gaze_tresh', type=float, default=0.2,
+    parser.add_argument('--gaze_tresh', type=float, default=0.23,
                         metavar='', help='Sets the Gaze Score threshold for the Attention Scorer, default is 0.38 (calibrated for custom keypoint model)')
     parser.add_argument('--gaze_time_tresh', type=float, default=2, metavar='',
                         help='Sets the Gaze Score time (seconds) threshold for the Attention Scorer, default is 2 seconds')

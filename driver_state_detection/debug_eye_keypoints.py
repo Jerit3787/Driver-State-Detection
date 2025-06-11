@@ -4,7 +4,8 @@ Debug script to help identify the correct eye keypoint indices for EAR calculati
 """
 
 import time
-import sys
+import sys                
+print("\nEye keypoints (standard indices 36-47):")
 import os
 import cv2
 import numpy as np
@@ -56,11 +57,20 @@ def debug_eye_keypoints():
             
         # Flip frame for mirror effect
         frame = cv2.flip(frame, 2)
-        
-        # Simple face detection using OpenCV
+          # Face detection with MTCNN
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+        
+        # Use MTCNN for face detection
+        from facenet_pytorch import MTCNN
+        detector = MTCNN(keep_all=True, device='cpu')
+        
+        # MTCNN detection
+        bounding_boxes, conf = detector.detect(frame, landmarks=False)
+        faces = []
+        if bounding_boxes is not None:
+            for box in bounding_boxes:
+                x1, y1, x2, y2 = box.astype(int)
+                faces.append([x1, y1, x2-x1, y2-y1])
         
         if len(faces) > 0:
             # Take the biggest face
@@ -94,7 +104,7 @@ def debug_eye_keypoints():
                         cv2.circle(frame, (kx, ky), 2, (0, 255, 255), -1)
                         cv2.putText(frame, str(i), (kx, ky), cv2.FONT_HERSHEY_PLAIN, 0.5, (255, 255, 0), 1)
                     
-                    # Highlight eye regions (assuming dlib indices 36-47)
+                    # Highlight eye regions (indices 36-47)
                     for i in range(36, 48):  # Both eyes
                         if i < len(keypoints):
                             kx, ky = int(keypoints[i, 0]), int(keypoints[i, 1])

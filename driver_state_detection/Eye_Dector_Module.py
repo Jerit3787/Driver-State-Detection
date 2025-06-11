@@ -27,7 +27,7 @@ class EyeDetector:
         self.frame = None
         self.show_processing = show_processing
         self.eye_width = None
-
+        
     def show_eye_keypoints(self, color_frame, landmarks):
         """
         Shows eyes keypoints found in the face, drawing red circles in their position in the frame/image
@@ -36,29 +36,27 @@ class EyeDetector:
         ----------
         color_frame: numpy array
             Frame/image in which the eyes keypoints are found
-        landmarks: list
-            List of 68 dlib keypoints of the face
+        landmarks: numpy array
+            Array of 68 keypoints of the face
         """
 
     
         self.keypoints = landmarks
 
         for n in range(36, 48):
-            x = self.keypoints.part(n).x
-            y = self.keypoints.part(n).y
+            x = int(self.keypoints[n, 0])
+            y = int(self.keypoints[n, 1])
             cv2.circle(color_frame, (x, y), 1, (0, 0, 255), -1)
         return
 
     def get_EAR(self, frame, landmarks):
         """
-        Computes the average eye aperture rate of the face
-
-        Parameters
+        Computes the average eye aperture rate of the face        Parameters
         ----------
         frame: numpy array
             Frame/image in which the eyes keypoints are found
-        landmarks: list
-            List of 68 dlib keypoints of the face
+        landmarks: numpy array
+            Array of 68 keypoints of the face
 
         Returns
         -------- 
@@ -76,32 +74,22 @@ class EyeDetector:
         # numpy array for storing the keypoints positions of the left eye
         eye_pts_l = np.zeros(shape=(6, 2))
         # numpy array for storing the keypoints positions of the right eye
-        eye_pts_r = np.zeros(shape=(6, 2))
-
-        # Support both dlib and numpy array landmarks
+        eye_pts_r = np.zeros(shape=(6, 2))        # Only support numpy array landmarks
         for n in range(36, 42):
-            if hasattr(pts, 'part'):
-                point_l = pts.part(n)
-                point_r = pts.part(n + 6)
-                eye_pts_l[i] = [point_l.x, point_l.y]
-                eye_pts_r[i] = [point_r.x, point_r.y]
-            else:
-                eye_pts_l[i] = [pts[n, 0], pts[n, 1]]
-                eye_pts_r[i] = [pts[n + 6, 0], pts[n + 6, 1]]
+            eye_pts_l[i] = [pts[n, 0], pts[n, 1]]
+            eye_pts_r[i] = [pts[n + 6, 0], pts[n + 6, 1]]
             i += 1
 
         def EAR_eye(eye_pts):
-            """
-            Computer the EAR score for a single eyes given it's keypoints
-            :param eye_pts: numpy array of shape (6,2) containing the keypoints of an eye considering the dlib ordering
+            """            Computer the EAR score for a single eyes given its keypoints
+            :param eye_pts: numpy array of shape (6,2) containing the keypoints of an eye
             :return: ear_eye
                 EAR of the eye
             """
             ear_eye = (LA.norm(eye_pts[1] - eye_pts[5]) + LA.norm(
                 eye_pts[2] - eye_pts[4])) / (2 * LA.norm(eye_pts[0] - eye_pts[3]))
-            '''
-            EAR is computed as the mean of two measures of eye opening (see dlib face keypoints for the eye)
-            divided by the eye lenght
+            '''            EAR is computed as the mean of two measures of eye opening
+            divided by the eye length
             '''
             return ear_eye
 
@@ -123,8 +111,8 @@ class EyeDetector:
         ----------
         frame: numpy array
             Frame/image in which the eyes keypoints are found
-        landmarks: list
-            List of 68 dlib keypoints of the face
+        landmarks: numpy array
+            Array of 68 keypoints of the face
 
         Returns
         -------- 
@@ -137,34 +125,22 @@ class EyeDetector:
         self.frame = frame
 
         def get_ROI(left_corner_keypoint_num: int):
-            """
-            Get the ROI bounding box of the eye given one of its dlib keypoints found in the face
+            """            Get the ROI bounding box of the eye given one of its keypoints found in the face
 
-            :param left_corner_keypoint_num: most left dlib keypoint of the eye
+            :param left_corner_keypoint_num: most left keypoint of the eye
             :return: eye_roi
                 Sub-frame of the eye region of the opencv frame/image
             """
 
-            kp_num = left_corner_keypoint_num
-            # Support both dlib and numpy array landmarks
-            if hasattr(self.keypoints, 'part'):
-                eye_array = np.array([
-                    (self.keypoints.part(kp_num).x, self.keypoints.part(kp_num).y),
-                    (self.keypoints.part(kp_num+1).x, self.keypoints.part(kp_num+1).y),
-                    (self.keypoints.part(kp_num+2).x, self.keypoints.part(kp_num+2).y),
-                    (self.keypoints.part(kp_num+3).x, self.keypoints.part(kp_num+3).y),
-                    (self.keypoints.part(kp_num+4).x, self.keypoints.part(kp_num+4).y),
-                    (self.keypoints.part(kp_num+5).x, self.keypoints.part(kp_num+5).y)
-                ], np.int32)
-            else:
-                eye_array = np.array([
-                    (self.keypoints[kp_num, 0], self.keypoints[kp_num, 1]),
-                    (self.keypoints[kp_num+1, 0], self.keypoints[kp_num+1, 1]),
-                    (self.keypoints[kp_num+2, 0], self.keypoints[kp_num+2, 1]),
-                    (self.keypoints[kp_num+3, 0], self.keypoints[kp_num+3, 1]),
-                    (self.keypoints[kp_num+4, 0], self.keypoints[kp_num+4, 1]),
-                    (self.keypoints[kp_num+5, 0], self.keypoints[kp_num+5, 1])
-                ], np.int32)
+            kp_num = left_corner_keypoint_num            # Only support numpy array landmarks
+            eye_array = np.array([
+                (self.keypoints[kp_num, 0], self.keypoints[kp_num, 1]),
+                (self.keypoints[kp_num+1, 0], self.keypoints[kp_num+1, 1]),
+                (self.keypoints[kp_num+2, 0], self.keypoints[kp_num+2, 1]),
+                (self.keypoints[kp_num+3, 0], self.keypoints[kp_num+3, 1]),
+                (self.keypoints[kp_num+4, 0], self.keypoints[kp_num+4, 1]),
+                (self.keypoints[kp_num+5, 0], self.keypoints[kp_num+5, 1])
+            ], np.int32)
 
             min_x = np.min(eye_array[:, 0])
             max_x = np.max(eye_array[:, 0])

@@ -14,10 +14,11 @@ def test_gaze_thresholds():
     # Load the model
     model = KeypointModel('../models/outputs/model.pth')
     eye_detector = EyeDetector()
-    
-    # Use webcam
+      # Use webcam
     cap = cv2.VideoCapture(1)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    # Use MTCNN for face detection
+    from facenet_pytorch import MTCNN
+    detector = MTCNN(keep_all=True, device='cpu')
     
     print("=== Gaze Threshold Tester ===")
     print("Current threshold: 0.38")
@@ -31,7 +32,14 @@ def test_gaze_thresholds():
         
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.bilateralFilter(gray, 5, 10, 10)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+        
+        # MTCNN detection
+        bounding_boxes, conf = detector.detect(frame, landmarks=False)
+        faces = []
+        if bounding_boxes is not None:
+            for box in bounding_boxes:
+                x1, y1, x2, y2 = box.astype(int)
+                faces.append([x1, y1, x2-x1, y2-y1])
         
         if len(faces) > 0:
             faces = sorted(faces, key=lambda f: f[2]*f[3], reverse=True)

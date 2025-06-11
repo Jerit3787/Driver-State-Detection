@@ -20,11 +20,17 @@ def test_keypoint_accuracy():
         print("Could not capture frame")
         cap.release()
         return
+      # Use MTCNN for face detection
+    from facenet_pytorch import MTCNN
+    detector = MTCNN(keep_all=True, device='cpu')
     
-    # Simple face detection using OpenCV
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+    # MTCNN detection
+    bounding_boxes, conf = detector.detect(frame, landmarks=False)
+    faces = []
+    if bounding_boxes is not None:
+        for box in bounding_boxes:
+            x1, y1, x2, y2 = box.astype(int)
+            faces.append([x1, y1, x2-x1, y2-y1])
     
     if len(faces) > 0:
         # Take the largest face

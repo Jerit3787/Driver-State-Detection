@@ -1,4 +1,5 @@
 numpy
 opencv-python #or opencv-contrib-python
-cmake
-dlib
+facenet-pytorch
+torch
+torchvision

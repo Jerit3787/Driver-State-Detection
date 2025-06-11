@@ -16,7 +16,7 @@ def draw_all_keypoints_with_labels(image, keypoints):
     for i, (x, y) in enumerate(keypoints):
         x, y = int(x), int(y)
         
-        # Color coding based on facial regions (approximate dlib mapping)
+        # Color coding based on facial regions (standard 68-point format)
         if 0 <= i <= 16:  # Jaw line
             color = (255, 0, 0)  # Blue
         elif 17 <= i <= 21:  # Right eyebrow
@@ -25,7 +25,7 @@ def draw_all_keypoints_with_labels(image, keypoints):
             color = (0, 255, 0)  # Green
         elif 27 <= i <= 35:  # Nose
             color = (0, 0, 255)  # Red
-        elif 36 <= i <= 41:  # Right eye (dlib convention)
+        elif 36 <= i <= 41:  # Right eye
             color = (255, 255, 0)  # Cyan
         elif 42 <= i <= 47:  # Left eye (dlib convention)
             color = (255, 0, 255)  # Magenta

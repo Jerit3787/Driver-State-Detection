@@ -21,56 +21,55 @@ def resize(frame, scale_percent):
 
 def get_face_area(face):
     """
-    Computes the area of the bounding box ROI of the face detected by the dlib face detector
+    Computes the area of the bounding box ROI of the face detected by the face detector
     It's used to sort the detected faces by the box area
 
-    :param face: dlib bounding box of a detected face in faces
+    :param face: bounding box of a detected face in faces [x, y, w, h]
     :return: area of the face bounding box
     """
-    return abs((face.left() - face.right()) * (face.bottom() - face.top()))
+    return abs(face[2] * face[3])
 
 
 def show_keypoints(keypoints, frame):
     """
-    Draw circles on the opencv frame over the face keypoints predicted by the dlib predictor
+    Draw circles on the opencv frame over the face keypoints
 
-    :param keypoints: dlib iterable 68 keypoints object
+    :param keypoints: numpy array of 68 keypoints
     :param frame: opencv frame
     :return: frame
-        Returns the frame with all the 68 dlib face keypoints drawn
+        Returns the frame with all the 68 face keypoints drawn
     """
     for n in range(0, 68):
-        x = keypoints.part(n).x
-        y = keypoints.part(n).y
+        x = int(keypoints[n, 0])
+        y = int(keypoints[n, 1])
         cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
-        return frame
+    return frame
 
 
 def midpoint(p1, p2):
     """
-    Compute the midpoint between two dlib keypoints
+    Compute the midpoint between two keypoints
 
-    :param p1: dlib single keypoint
-    :param p2: dlib single keypoint
+    :param p1: numpy array [x, y] of point 1
+    :param p2: numpy array [x, y] of point 2
     :return: array of x,y coordinated of the midpoint between p1 and p2
     """
-    return np.array([int((p1.x + p2.x) / 2), int((p1.y + p2.y) / 2)])
+    return np.array([int((p1[0] + p2[0]) / 2), int((p1[1] + p2[1]) / 2)])
 
 
 def get_array_keypoints(landmarks, dtype="int", verbose: bool = False):
     """
-    Converts all the iterable dlib 68 face keypoint in a numpy array of shape 68,2
+    Ensures keypoints are in a numpy array of shape 68,2
 
-    :param landmarks: dlib iterable 68 keypoints object
+    :param landmarks: numpy array of keypoints of shape 68,2
     :param dtype: dtype desired in output
     :param verbose: if set to True, prints array of keypoints (default is False)
     :return: points_array
         Numpy array containing all the 68 keypoints (x,y) coordinates
         The shape is 68,2
     """
-    points_array = np.zeros((68, 2), dtype=dtype)
-    for i in range(0, 68):
-        points_array[i] = (landmarks.part(i).x, landmarks.part(i).y)
+    # If landmarks is already a numpy array, just ensure correct dtype
+    points_array = np.array(landmarks, dtype=dtype)
 
     if verbose:
         print(points_array)

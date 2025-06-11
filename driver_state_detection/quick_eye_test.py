@@ -34,12 +34,21 @@ def test_keypoint_positions():
         cv2.imshow('Eye Test', frame)
         
         key = cv2.waitKey(1) & 0xFF
-          if key == ord(' '):  # Space key
-            try:
-                # First detect faces
+        if key == ord(' '):  # Space key
+            try:                # First detect faces using MTCNN
+                from facenet_pytorch import MTCNN
+                detector = MTCNN(keep_all=True, device='cpu')
+                
+                # Convert to grayscale for other processing
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-                faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+                
+                # MTCNN detection
+                bounding_boxes, conf = detector.detect(frame, landmarks=False)
+                faces = []
+                if bounding_boxes is not None:
+                    for box in bounding_boxes:
+                        x1, y1, x2, y2 = box.astype(int)
+                        faces.append([x1, y1, x2-x1, y2-y1])
                 
                 if len(faces) > 0:
                     # Take the biggest face
@@ -60,7 +69,8 @@ def test_keypoint_positions():
                         keypoints = keypoint_model.predict(face_img)
                         # Map keypoints back to original image coordinates
                         keypoints[:, 0] += x1
-                        keypoints[:, 1] += y1                        if keypoints is not None and len(keypoints) >= 68:
+                        keypoints[:, 1] += y1                        
+                        if keypoints is not None and len(keypoints) >= 68:
                     
                             print(f"\nFrame captured! Analyzing {len(keypoints)} keypoints...")
                             
@@ -76,9 +86,8 @@ def test_keypoint_positions():
                             # Test different potential eye regions
                             print("\nTesting different eye keypoint regions:")
                             print("-" * 50)
-                            
-                            # Standard dlib mapping (what we're currently using)
-                            print("1. Standard dlib (36-47):")
+                              # Standard keypoint mapping (what we're currently using)
+                            print("1. Standard format (36-47):")
                             left_eye_std = keypoints[36:42]
                             right_eye_std = keypoints[42:48]
                             print(f"   Left eye (36-41): {[f'({x:.0f},{y:.0f})' for x,y in left_eye_std]}")

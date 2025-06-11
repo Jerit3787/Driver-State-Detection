@@ -23,9 +23,7 @@ def main():
 
     # selection the camera number, default is 0 (webcam)
     parser.add_argument('-c', '--camera', type=int,
-                        default=0, metavar='', help='Camera number, default is 0 (webcam)')
-
-    # selection of fps limit for computing time between frames
+                        default=0, metavar='', help='Camera number, default is 0 (webcam)')    # selection of fps limit for computing time between frames
     parser.add_argument('-F', '--fps_limit', type=int, default=11, metavar='',
                         help='FPS limit, default is 11 (WARNING: if this surpasses the fps max rate reachable by your device, it will cause problems for the scores computation)')
     # TODO: add option for choose if use camera matrix and dist coeffs
@@ -41,8 +39,6 @@ def main():
                         metavar='', help='Show the head pose axis, default is true')
     parser.add_argument('--verbose', type=bool, default=False,
                         metavar='', help='Prints additional info, default is false')
-    parser.add_argument('--use_mtcnn', type=bool, default=True,
-                        metavar='', help='Use MTCNN face detector instead of OpenCV Haar cascade for better accuracy, default is true')
 
     # Attention Scorer parameters (EAR, Gaze Score, Pose)
     parser.add_argument('--smooth_factor', type=float, default=0.5,
@@ -85,24 +81,15 @@ def main():
     # FPS upper limit value, needed for estimating the time for each frame and increasing performances
     fps_lim = args.fps_limit
     time_lim = 1. / fps_lim  # time window for each frame taken by the webcam
-    
-    # previous landmarks for head pose estimation (initially set to None) (used for smoothing)
+      # previous landmarks for head pose estimation (initially set to None) (used for smoothing)
     prev_landmarks = None
-
-    # Face detection setup
-    if args.use_mtcnn:
-        from facenet_pytorch import MTCNN
-        # Use MTCNN for more accurate face detection (as used in DebuggerCafe model training)
-        Detector = MTCNN(keep_all=True, device='cpu')
-        use_mtcnn = True
-        if args.verbose:
-            print("Using MTCNN face detector for improved accuracy")
-    else:
-        # Use OpenCV's Haar cascade face detector
-        Detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        use_mtcnn = False
-        if args.verbose:
-            print("Using OpenCV Haar cascade face detector")
+    
+    # Face detection setup - using MTCNN only
+    from facenet_pytorch import MTCNN
+    # Use MTCNN for face detection
+    Detector = MTCNN(keep_all=True, device='cpu')
+    if args.verbose:
+        print("Using MTCNN face detector")
 
     # Load your keypoint model
     keypoint_model = KeypointModel('../models/outputs/model.pth')
@@ -145,25 +132,20 @@ def main():
             ptime = ctime
 
             # start the tick counter for computing the processing time for each frame
-            e1 = cv2.getTickCount()
-            # transform the BGR frame in grayscale
+            e1 = cv2.getTickCount()            # transform the BGR frame in grayscale
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # apply a bilateral filter to lower noise but keep frame details
             gray = cv2.bilateralFilter(gray, 5, 10, 10)
-
-            # Detect faces using either MTCNN or OpenCV Haar cascade
-            if use_mtcnn:
-                # MTCNN detection (returns bounding boxes and confidence scores)
-                bounding_boxes, conf = Detector.detect(frame, landmarks=False)
-                faces = []
-                if bounding_boxes is not None:
-                    for box in bounding_boxes:
-                        x1, y1, x2, y2 = box.astype(int)
-                        # Convert to (x, y, w, h) format like OpenCV
-                        faces.append([x1, y1, x2-x1, y2-y1])
-            else:
-                # OpenCV Haar cascade detection
-                faces = Detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+            
+            # Detect faces using MTCNN
+            # MTCNN detection (returns bounding boxes and confidence scores)
+            bounding_boxes, conf = Detector.detect(frame, landmarks=False)
+            faces = []
+            if bounding_boxes is not None:
+                for box in bounding_boxes:
+                    x1, y1, x2, y2 = box.astype(int)
+                    # Convert to (x, y, w, h) format like OpenCV
+                    faces.append([x1, y1, x2-x1, y2-y1])
 
             if len(faces) > 0:  # process the frame only if at least a face is found
 

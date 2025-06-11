@@ -7,9 +7,8 @@ from Utils import rotationMatrixToEulerAngles, draw_pose_info
 class HeadPoseEstimator:
 
     def __init__(self, camera_matrix=None, dist_coeffs=None, show_axis: bool = False):
-        """
-        Head Pose estimator class that contains the get_pose method for computing the three euler angles
-        (roll, pitch, yaw) of the head. It uses the image/frame, the dlib detected landmarks of the head and,
+        """        Head Pose estimator class that contains the get_pose method for computing the three euler angles
+        (roll, pitch, yaw) of the head. It uses the image/frame, the keypoint model detected landmarks of the head and,
         optionally the camera parameters
 
         Parameters
@@ -46,8 +45,8 @@ class HeadPoseEstimator:
         ----------
         frame: numpy array
             Image/frame captured by the camera
-        landmarks: dlib.rectangle
-            Dlib detected 68 landmarks of the head
+        landmarks: numpy array
+            Array of 68 landmarks of the head
 
         Returns
         --------
@@ -55,7 +54,7 @@ class HeadPoseEstimator:
         - if unsuccessful: None,None,None,None (tuple)
 
         """
-        self.keypoints = landmarks  # dlib 68 landmarks
+        self.keypoints = landmarks  # 68 landmarks array
         self.frame = frame  # opencv image array
 
         self.axis = np.float32([[200, 0, 0],
@@ -75,47 +74,24 @@ class HeadPoseEstimator:
             )
 
         if self.dist_coeffs is None:  # if no distorsion coefficients are given, assume no lens distortion
-            self.dist_coeffs = np.zeros((4, 1))
-
-        # 2D Point position of dlib face keypoints used for pose estimation
-        if hasattr(landmarks, 'part'):
-            self.image_points = np.array([
-                (landmarks.part(30).x, landmarks.part(30).y),  # Nose tip
-                (landmarks.part(8).x, landmarks.part(8).y),  # Chin
-                (landmarks.part(36).x, landmarks.part(36).y),  # Left eye left corner
-                (landmarks.part(45).x, landmarks.part(45).y),  # Right eye right corner
-                (landmarks.part(48).x, landmarks.part(48).y),  # Left Mouth corner
-                (landmarks.part(54).x, landmarks.part(54).y)   # Right mouth corner
-            ], dtype="double")
-        else:
-            self.image_points = np.array([
-                (landmarks[30, 0], landmarks[30, 1]),  # Nose tip
-                (landmarks[8, 0], landmarks[8, 1]),    # Chin
-                (landmarks[36, 0], landmarks[36, 1]),  # Left eye left corner
-                (landmarks[45, 0], landmarks[45, 1]),  # Right eye right corner
-                (landmarks[48, 0], landmarks[48, 1]),  # Left Mouth corner
-                (landmarks[54, 0], landmarks[54, 1])   # Right mouth corner
-            ], dtype="double")
-
+            self.dist_coeffs = np.zeros((4, 1))        # 2D Point position of face keypoints used for pose estimation
+        self.image_points = np.array([
+            (landmarks[30, 0], landmarks[30, 1]),  # Nose tip
+            (landmarks[8, 0], landmarks[8, 1]),    # Chin
+            (landmarks[36, 0], landmarks[36, 1]),  # Left eye left corner
+            (landmarks[45, 0], landmarks[45, 1]),  # Right eye right corner
+            (landmarks[48, 0], landmarks[48, 1]),  # Left Mouth corner
+            (landmarks[54, 0], landmarks[54, 1])   # Right mouth corner
+        ], dtype="double")
         if prev_landmarks is not None:
-            if hasattr(prev_landmarks, 'part'):
-                self.prev_image_points = np.array([
-                    (prev_landmarks.part(30).x, prev_landmarks.part(30).y),
-                    (prev_landmarks.part(8).x, prev_landmarks.part(8).y),
-                    (prev_landmarks.part(36).x, prev_landmarks.part(36).y),
-                    (prev_landmarks.part(45).x, prev_landmarks.part(45).y),
-                    (prev_landmarks.part(48).x, prev_landmarks.part(48).y),
-                    (prev_landmarks.part(54).x, prev_landmarks.part(54).y)
-                ], dtype="double")
-            else:
-                self.prev_image_points = np.array([
-                    (prev_landmarks[30, 0], prev_landmarks[30, 1]),
-                    (prev_landmarks[8, 0], prev_landmarks[8, 1]),
-                    (prev_landmarks[36, 0], prev_landmarks[36, 1]),
-                    (prev_landmarks[45, 0], prev_landmarks[45, 1]),
-                    (prev_landmarks[48, 0], prev_landmarks[48, 1]),
-                    (prev_landmarks[54, 0], prev_landmarks[54, 1])
-                ], dtype="double")
+            self.prev_image_points = np.array([
+                (prev_landmarks[30, 0], prev_landmarks[30, 1]),
+                (prev_landmarks[8, 0], prev_landmarks[8, 1]),
+                (prev_landmarks[36, 0], prev_landmarks[36, 1]),
+                (prev_landmarks[45, 0], prev_landmarks[45, 1]),
+                (prev_landmarks[48, 0], prev_landmarks[48, 1]),
+                (prev_landmarks[54, 0], prev_landmarks[54, 1])
+            ], dtype="double")
 
         # If prev_image_points does not exist, initialize it to current image_points
         if not hasattr(self, 'prev_image_points') or self.prev_image_points is None:

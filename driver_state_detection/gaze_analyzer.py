@@ -18,9 +18,9 @@ def analyze_gaze_detection():
     if not cap.isOpened():
         print("Could not open webcam")
         return
-    
-    # Simple face detection using OpenCV
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+      # Face detection using MTCNN
+    from facenet_pytorch import MTCNN
+    detector = MTCNN(keep_all=True, device='cpu')
     
     print("=== Gaze Detection Analyzer ===")
     print("Instructions:")
@@ -37,11 +37,17 @@ def analyze_gaze_detection():
         ret, frame = cap.read()
         if not ret:
             break
-        
-        # Face detection
+          # Face detection with MTCNN
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.bilateralFilter(gray, 5, 10, 10)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+        
+        # MTCNN detection
+        bounding_boxes, conf = detector.detect(frame, landmarks=False)
+        faces = []
+        if bounding_boxes is not None:
+            for box in bounding_boxes:
+                x1, y1, x2, y2 = box.astype(int)
+                faces.append([x1, y1, x2-x1, y2-y1])
         
         if len(faces) > 0:
             # Take the largest face

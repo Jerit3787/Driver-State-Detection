@@ -43,13 +43,13 @@ class KeypointModel:
         print("Keypoints shape:", keypoints.shape)
 
         # --- KEYPOINT REMAPPING PLACEHOLDER ---
-        # If your model's output order is different from dlib's, remap here.
-        # Example: model_to_dlib[i] = dlib_index for your model's i-th keypoint
+        # If your model's output order is different from the standard 68 point format, remap here.
+        # Example: model_to_standard[i] = standard_index for your model's i-th keypoint
         # Fill this list with the correct mapping if needed.
-        # model_to_dlib = [ ... 68 indices ... ]
+        # model_to_standard = [ ... 68 indices ... ]
         # remapped_keypoints = np.zeros_like(keypoints)
-        # for i, dlib_idx in enumerate(model_to_dlib):
-        #     remapped_keypoints[dlib_idx] = keypoints[i]
+        # for i, std_idx in enumerate(model_to_standard):
+        #     remapped_keypoints[std_idx] = keypoints[i]
         # keypoints = remapped_keypoints
         # --- END REMAPPING ---
 
